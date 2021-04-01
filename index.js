@@ -77,21 +77,30 @@ app.delete('/api/persons/:id', (req, res) => {
 app.post('/api/persons', (req, res) => {
   const person = req.body
 
-  if (!person || !person.name || !person.number)
+  newName = persons.find(p => p.name === person.name)
+
+  console.log(newName);
+  if (!person || !person.name || !person.number) {
     return res.status(400).json({
       error: 'person.name or person.number is missing'
     })
+  } else if (newName) {
+    return res.status(400).json({
+      error: 'Ya existe el nombre'
+    })
+  } else {
 
-  const ids = persons.map(p => p.id)
-  const maxId = Math.max(...ids)
+    const ids = persons.map(p => p.id)
+    const maxId = Math.max(...ids)
 
-  const newPerson = {
-    id: maxId + 1,
-    name: person.name,
-    number: person.number,
+    const newPerson = {
+      id: maxId + 1,
+      name: person.name,
+      number: person.number,
+    }
+    persons = [...persons, newPerson]
+    res.status(201).json(newPerson)
   }
-  persons = [...persons, newPerson]
-  res.status(201).json(newPerson)
 })
 
 const PORT = 3001
