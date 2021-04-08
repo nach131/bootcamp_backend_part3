@@ -1,0 +1,9 @@
+
+PUT http://localhost:3001/api/persons/606ecf95f08be05c55e6cbc7
+Content-Type: application/json
+
+{
+  "name":"Pedro Marmol",
+  "number":"543-4342"
+
+}

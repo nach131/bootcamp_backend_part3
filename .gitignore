@@ -39,7 +39,6 @@ bower_components
 
 # Dependency directories
 
-backend/node_modules/
 node_modules/
 jspm_packages/
 

@@ -1,5 +1,9 @@
+require('dotenv').config()
+require('./mongo')
+
 const express = require('express');
 const cors = require('cors');
+const Person = require('./model/Persons')
 
 const app = express()
 
@@ -8,45 +12,14 @@ app.use(express.static('build'))
 app.use(express.json())
 
 let persons = [
-  {
-    "name": "Arto Hellas",
-    "number": "040-123456",
-    "id": 1
-  },
-  {
-    "name": "Ada Lovelace",
-    "number": "39-44-5323523",
-    "id": 2
-  },
-  {
-    "name": "Dan Abramov",
-    "number": "12-43-234345",
-    "id": 3
-  },
-  {
-    "name": "Mary Poppendieck",
-    "number": "39-23-6423122",
-    "id": 4
-  },
-  {
-    "name": "pedro",
-    "number": "233232",
-    "id": 8
-  },
-  {
-    "name": "pablo",
-    "number": "1313",
-    "id": 9
-  },
-  {
-    "name": "bulma",
-    "number": "1212",
-    "id": 10
-  }
+
 ]
 
 app.get('/api/persons', (req, res) => {
-  res.json(persons)
+  // res.json(persons)
+  Person.find({}).then(persons => {
+    res.json(persons)
+  })
 })
 
 app.get('/info', (req, res) => {
@@ -58,49 +31,61 @@ app.get('/info', (req, res) => {
   res.send(`<p>Phonebook has info for ${registros} people</p><p>${date}</p>`)
 })
 
-app.get('/api/persons/:id', (req, res) => {
-  const id = Number(req.params.id)
-  person = persons.find(p => p.id === id)
-  if (person) {
-    res.json(person)
-  } else {
-    res.status(404).end()
+app.get('/api/persons/:id', (req, res, next) => {
+  const id = req.params.id
+
+  Person.findById(id)
+    .then(person => {
+      if (person) {
+        return res.json(person)
+      } else {
+        res.status(404).end()
+      }
+    })
+    .catch(err => next(err))
+
+})
+
+app.put('/api/persons/:id', (req, res, next) => {
+  const id = req.params.id
+  const person = req.body
+  const newPersoInfo = {
+    name: person.name,
+    number: person.number
   }
+
+  Person.findByIdAndUpdate(id, newPersoInfo, { new: true })
+    .then(result => {
+      res.json(result)
+    })
 })
 
 app.delete('/api/persons/:id', (req, res) => {
-  const id = Number(req.params.id)
-  person = persons.filter(p => p.id !== id)
+  const id = req.params.id
+
+  Person.findByIdAndDelete(id).then(() => {
+    res.status(204).end()
+  })
+    .catch(error => next(error))
   res.status(204).end()
 })
 
 app.post('/api/persons', (req, res) => {
   const person = req.body
 
-  newName = persons.find(p => p.name === person.name)
-
-  console.log(newName);
-  if (!person || !person.name || !person.number) {
+  if (!person || !person.name) {
     return res.status(400).json({
-      error: 'person.name or person.number is missing'
+      error: 'person.name is missing'
     })
-  } else if (newName) {
-    return res.status(400).json({
-      error: 'Ya existe el nombre'
-    })
-  } else {
-
-    const ids = persons.map(p => p.id)
-    const maxId = Math.max(...ids)
-
-    const newPerson = {
-      id: maxId + 1,
-      name: person.name,
-      number: person.number,
-    }
-    persons = [...persons, newPerson]
-    res.status(201).json(newPerson)
   }
+  const newPerson = new Person({
+    name: person.name,
+    number: person.number
+  })
+  newPerson.save().then(savedPerson => {
+    res.json(savedPerson)
+  })
+
 })
 
 const PORT = process.env.PORT || 3001
